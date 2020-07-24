@@ -9,6 +9,8 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
+import Swipeout from 'react-native-swipeout';
+import {FAB, TextInput} from 'react-native-paper';
 
 import {
   SafeAreaView,
@@ -30,50 +32,48 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 
 function HomeScreen({navigation, route}) {
-  const [dataHome, setData] = React.useState([]);
+  const [dataHome, setDataHome] = React.useState([]);
 
   if (route.params === undefined) {
     if (dataHome.length === 0) {
       fetch('https://jsonplaceholder.typicode.com/posts')
-        .then(res => res.json())
-        .then(res => {
-          setData(res);
+        .then((res) => res.json())
+        .then((res) => {
+          setDataHome(res);
         })
-        .catch(err => console.log('Fail', err));
+        .catch((err) => console.log('Fail', err));
     }
   } else {
     var {state} = route.params;
-    setData(state);
+    setDataHome(state);
   }
 
   var projetoHomeScreen = [];
   var aux = {};
   var rowsUser = [];
   var cont = 0;
-  React.useEffect(() => {
-    projetoHomeScreen = dataHome;
-    for (let i = 0; i < projetoHomeScreen.length; i++) {
-      cont = 0;
-      for (let j = 0; j < rowsUser.length; j++) {
-        if (projetoHomeScreen[i].userId === rowsUser[j].numero) {
-          cont = 1;
-        }
-      }
-      if (cont === 0) {
-        aux = {
-          numero: projetoHomeScreen[i].userId,
-          userId: 'Key:' + projetoHomeScreen[i].userId
-        };
-        rowsUser.push(aux);
+  projetoHomeScreen = dataHome;
+  for (let i = 0; i < projetoHomeScreen.length; i++) {
+    cont = 0;
+    for (let j = 0; j < rowsUser.length; j++) {
+      if (projetoHomeScreen[i].userId === rowsUser[j].numero) {
+        cont = 1;
       }
     }
-  })
+    if (cont === 0) {
+      aux = {
+        numero: projetoHomeScreen[i].userId,
+        userId: 'Key:' + projetoHomeScreen[i].userId,
+      };
+      rowsUser.push(aux);
+    }
+  }
 
   return (
     <View style={styles.containerHome}>
       <FlatList
         data={rowsUser}
-        renderItem={({item}) =>
+        renderItem={({item}) => (
           <View style={styles.lineHome}>
             <TouchableOpacity
               onPress={() => {
@@ -85,12 +85,87 @@ function HomeScreen({navigation, route}) {
               <Text style={styles.infoHome}>Usuario {item.numero} </Text>
             </TouchableOpacity>
           </View>
-        }
+        )}
         keyExtractor={(item) => item.userId}
       />
     </View>
   );
 }
+
+function Postagens({navigation, route}) {
+  const {parametro} = route.params;
+  const {state} = route.params;
+  const [dataPostagem, setDataPostagem] = React.useState(state);
+
+  var rowsUser = [];
+
+  for (let i = 0; i < dataPostagem.length; i++) {
+    if (JSON.stringify(dataPostagem[i].userId) === parametro.slice(4)) {
+      rowsUser.push(dataPostagem[i]);
+    }
+  }
+
+  return (
+    <View style={styles.containerPostagem}>
+      <FlatList
+        data={rowsUser}
+        renderItem={({item}) => (
+          <Swipeout
+            style={styles.swipe}
+            right={[
+              {
+                text: 'delete',
+                backgroundColor: 'red',
+                color: 'white',
+                onPress: () => {
+                  //fetch('https://jsonplaceholder.typicode.com/posts/'+item.id, {method: 'DELETE',});
+                  for (var i = 0; i < dataPostagem.length; i++) {
+                    if (dataPostagem[i].id === item.id) {
+                      dataPostagem.splice(i, 1);
+                      setDataPostagem(dataPostagem);
+                    }
+                  }
+                  navigation.navigate('Postagens', {
+                    parametro: parametro,
+                    state: dataPostagem,
+                  });
+                },
+              },
+            ]}>
+            <View style={styles.linePostagens}>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('Editar Postagens', {item, dataPostagem});
+                }}>
+                <Text style={styles.infoPostagemTitulo}>{item.title}</Text>
+                <Text style={styles.infoPostagem}>{item.body}</Text>
+              </TouchableOpacity>
+            </View>
+          </Swipeout>
+        )}
+        keyExtractor={(item) => 'key:' + item.id}
+      />
+
+      <View style={styles.linePostagens}>
+        <Text color="#2c3e50"> </Text>
+      </View>
+
+      <FAB
+        style={styles.fab}
+        //icon="add"
+        color="white"
+        onPress={() => {
+          navigation.navigate('Criar Postagens', {
+            parametro: parametro,
+            state: state,
+          });
+        }}
+      />
+    </View>
+  );
+}
+function EditPostagens({navigation, route}) {}
+function CreatePostagens({navigation, route}) {}
 
 const Stack = createStackNavigator();
 
