@@ -20,6 +20,7 @@ import {
   Text,
   StatusBar,
   FlatList,
+  Button,
   TouchableOpacity,
 } from 'react-native';
 
@@ -30,6 +31,26 @@ import {
   DebugInstructions,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+
+function compareId(a, b) {
+  if (a.id < b.id) {
+    return -1;
+  }
+  if (a.id > b.id) {
+    return 1;
+  }
+  return 0;
+}
+
+function compareUserId(a, b) {
+  if (a.userId < b.userId) {
+    return -1;
+  }
+  if (a.userId > b.userId) {
+    return 1;
+  }
+  return 0;
+}
 
 function HomeScreen({navigation, route}) {
   const [dataHome, setDataHome] = React.useState([]);
@@ -152,7 +173,7 @@ function Postagens({navigation, route}) {
 
       <FAB
         style={styles.fab}
-        //icon="add"
+        icon="plus"
         color="white"
         onPress={() => {
           navigation.navigate('Criar Postagens', {
@@ -164,8 +185,103 @@ function Postagens({navigation, route}) {
     </View>
   );
 }
-function EditPostagens({navigation, route}) {}
-function CreatePostagens({navigation, route}) {}
+function EditPostagens({navigation, route}) {
+  const {item} = route.params;
+  const {dataPostagem} = route.params;
+
+  const [dataEditPostagem, setDataEditPostagem] = React.useState(dataPostagem);
+
+  var auxBody = item.body;
+  var auxTitle = item.title;
+  return (
+    <View style={styles.containerPostagem}>
+      <Text style={{color: 'white'}}>Edite o Titulo</Text>
+      <TextInput
+        style={styles.caixaTexto}
+        defaultValue={item.title}
+        onChangeText={(text) => (auxTitle = text)}
+      />
+      <Text style={{color: 'white'}}>Edite o post</Text>
+      <TextInput
+        style={styles.caixaTexto}
+        defaultValue={item.body}
+        onChangeText={(text) => (auxBody = text)}
+      />
+      <Button
+        title="Save"
+        onPress={() => {
+          for (let i = 0; i < dataPostagem.length; i++) {
+            if (dataPostagem[i].id === item.id) {
+              dataPostagem[i].title = auxTitle;
+              dataPostagem[i].body = auxBody;
+              // fetch('https://jsonplaceholder.typicode.com/posts/' + item.id, {
+              //   method: 'PUT',
+              //   body: dataPostagem[i],
+              //   headers: {
+              //     "Content-type": "application/json; charset=UTF-8"
+              //   }
+              // })
+              //   .then(response => response.json())
+              //   .then(json => console.log(json))
+            }
+          }
+          setDataEditPostagem(dataPostagem);
+          navigation.navigate('Postagens', {dataEditPostagem});
+        }}
+      />
+    </View>
+  );
+}
+
+function CreatePostagens({navigation, route}) {
+  const {parametro} = route.params;
+  const {state} = route.params;
+  state.sort(compareId);
+  const [dataCreatePostagem, setDataCreatePostagem] = React.useState(state);
+
+  var auxBody;
+  var auxTitle;
+  var auxObject;
+
+  return (
+    <View style={styles.containerPostagem}>
+      <Text style={{color: 'white'}}>Escreva o Titulo</Text>
+      <TextInput
+        style={styles.caixaTexto}
+        onChangeText={(text) => (auxTitle = text)}
+      />
+      <Text style={{color: 'white'}}>Escreva o post</Text>
+      <TextInput
+        style={styles.caixaTexto}
+        onChangeText={(text) => (auxBody = text)}
+      />
+      <Button
+        title="Save"
+        onPress={() => {
+          auxObject = {
+            userId: parseInt(parametro.slice(4), 10),
+            id: state[state.length - 1].id + 1,
+            title: auxTitle,
+            body: auxBody,
+          };
+          dataCreatePostagem.push(auxObject);
+          dataCreatePostagem.sort(compareUserId);
+          setDataCreatePostagem(dataCreatePostagem);
+          // fetch('https://jsonplaceholder.typicode.com/posts', {
+          //   method: 'POST',
+          //   body: auxObject,
+          //   headers: {
+          //     "Content-type": "application/json; charset=UTF-8"
+          //   }
+          // })
+          //   .then(response => response.json())
+          //   .then(json => console.log(json))
+          navigation.navigate('Postagens', {dataCreatePostagem});
+        }}
+      />
+    </View>
+  );
+}
 
 const Stack = createStackNavigator();
 
@@ -185,45 +301,10 @@ const App: () => React$Node = () => {
 };
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
   containerHome: {
-    width: 360,
-    height: 640,
+    //width: 360,
+    //height: 640,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     textAlignVertical: 'center',
@@ -233,8 +314,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#2c3e50',
   },
   containerPostagem: {
-    width: 360,
-    height: 640,
+    // width: 360,
+    // height: 640,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     textAlignVertical: 'center',
@@ -271,7 +353,7 @@ const styles = StyleSheet.create({
   },
   lineHome: {
     height: 40,
-    width: 300,
+    //width: 300,
     flexDirection: 'row',
     borderTopColor: '#ccc',
     borderTopWidth: 2,
@@ -281,7 +363,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linePostagens: {
-    width: 340,
+    //width: 340,
     height: 'auto',
     flexDirection: 'row',
     borderBottomColor: '#ccc',
@@ -289,6 +371,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     textAlign: 'justify',
+  },
+  caixaTexto: {
+    height: 40,
+    width: 200,
   },
 });
 
